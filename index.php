@@ -50,6 +50,7 @@ t_b_b.id AS balasan_id,
 t_b_b.isi_balasan,
 t_b_b.id_balasan_ke_komentar,
 t_b_b.id_pengguna,
+t_b_b.pengguna_dibalas,
 t_b_b.balasan_ke,
 t_b_b.balasan_dibuat,
 t_b_b.balasan_diperbarui,
@@ -63,9 +64,9 @@ tabel_balasan_ke_balasan AS t_b_b
     JOIN
 tabel_balasan_ke_komentar AS t_b_k ON (t_b_b.id_balasan_ke_komentar = t_b_k.id)
     JOIN
-tabel_pengguna AS t_p ON(t_b_b.id_pengguna = t_p.id);');
+tabel_pengguna AS t_p ON(t_b_b.id_pengguna = t_p.id)');
 
-$jumlah_komentar = count($komentar) + count($balasan);
+$jumlah_komentar = count($komentar) + count($balasan) + count($balasan2);
 
 function selisihWaktuUntukKomentar($id)
 {
@@ -242,14 +243,15 @@ if (isset($_POST['tombol_balas'])) {
 
 // Komentar 2
 if (isset($_POST['tombol_balas_2'])) {
-    $balasan_ke = 2;
+    $balasan_ke = $_POST['balasan_ke'];
 
     $isi_balasan = htmlspecialchars($_POST['isi_balasan']);
     $id_balasan_ke_komentar = $_POST['id'];
     $id_pengguna = $_SESSION['masuk']['id'];
     $balasan_ke = $balasan_ke;
+    $penggunaDibalas = $_POST['penggunaDibalas'];
 
-    $query = "INSERT INTO tabel_balasan_ke_balasan (isi_balasan, id_balasan_ke_komentar, id_pengguna, balasan_ke) VALUES ('$isi_balasan', '$id_balasan_ke_komentar', '$id_pengguna', '$balasan_ke')";
+    $query = "INSERT INTO tabel_balasan_ke_balasan (isi_balasan, id_balasan_ke_komentar, id_pengguna, balasan_ke, pengguna_dibalas) VALUES ('$isi_balasan', '$id_balasan_ke_komentar', '$id_pengguna', '$balasan_ke', '$penggunaDibalas')";
     mysqli_query($conn, $query);
 
     if (mysqli_affected_rows($conn) > 0) {
@@ -399,20 +401,20 @@ if (isset($_POST['tombol_balas_2'])) {
                     <!-- balasan ke 1 -->
                     <?php foreach ($balasan as $b): ?>
                     <?php if ($b['id_komentar'] == $k['comment_id'] && $b['balasan_ke'] == 1): ?>
-                    <div class="fw-normal ms-4 text-primary ">
+                    <div class="fw-normal ms-5 text-primary ">
                         <?=$b['nama_pengguna'];?> <i class="bi bi-arrow-return-right ms-2 me-2"></i>
                         <span class="text-muted"><?=$k['nama_pengguna'];?></span>
                         <small class="text-muted ms-3">
                             <?=selisihWaktuUntukBalasan($b['reason_id']);?>
                         </small>
                     </div>
-                    <p class="mb-0 ms-4">
+                    <p class="mb-0 ms-5">
                         <?=$b['isi_balasan'];?>
                     </p>
-                    <small class="mt-0 ms-4">
+                    <small class="mt-0 ms-5">
                         <?php if (isset($_SESSION['masuk'])): ?>
                         <a class="text-decoration-none text-muted balas-komentar-2" data-bs-toggle="modal"
-                            data-bs-target="#modalSheet" data-id="<?=$b['reason_id'];?>">
+                            data-bs-target="#modalSheet" data-id="<?=$b['reason_id'];?>" data-balasan_ke="2">
                             Balas <i class="bi bi-reply"></i>
                         </a>
                         <?php else: ?>
@@ -426,22 +428,24 @@ if (isset($_POST['tombol_balas_2'])) {
 
                     <!-- balasan ke 2 -->
                     <?php foreach ($balasan2 as $b2): ?>
-                    <?php if ($b2['id_balasan_ke_komentar'] == $b['reason_id'] && $b2['balasan_ke'] == 2): ?>
-                    <div class="ms-4">
-                        <div class="fw-normal ms-4 text-primary ">
+                    <?php if ($b2['id_balasan_ke_komentar'] == $b['reason_id']): ?>
+                    <?php if ($b2['balasan_ke'] == 2): ?>
+                    <div class="ms-5">
+                        <div class="fw-normal ms-5 text-primary ">
                             <?=$b2['nama_pengguna'];?> <i class="bi bi-arrow-return-right ms-2 me-2"></i>
                             <span class="text-muted"><?=$b['nama_pengguna'];?></span>
                             <small class="text-muted ms-3">
                                 <?=selisihWaktuUntukBalasan2($b2['balasan_id']);?>
                             </small>
                         </div>
-                        <p class="mb-0 ms-4">
+                        <p class="mb-0 ms-5">
                             <?=$b2['isi_balasan'];?>
                         </p>
-                        <small class="mt-0 ms-4">
+                        <small class="mt-0 ms-5">
                             <?php if (isset($_SESSION['masuk'])): ?>
                             <a class="text-decoration-none text-muted balas-komentar-2" data-bs-toggle="modal"
-                                data-bs-target="#modalSheet" data-id="<?=$b['reason_id'];?>">
+                                data-bs-target="#modalSheet" data-id="<?=$b['reason_id'];?>"
+                                data-pengguna="<?=$b2['nama_pengguna'];?>" data-balasan_ke="3">
                                 Balas <i class="bi bi-reply"></i>
                             </a>
                             <?php else: ?>
@@ -453,6 +457,148 @@ if (isset($_POST['tombol_balas_2'])) {
                             <?php endif;?>
                         </small>
                     </div>
+                    <!-- Balasan 3 -->
+                    <?php elseif ($b2['balasan_ke'] == 3): ?>
+                    <div class="ms-5">
+                        <div class="ms-5">
+                            <div class="fw-normal ms-5 text-primary ">
+                                <?=$b2['nama_pengguna'];?> <i class="bi bi-arrow-return-right ms-2 me-2"></i>
+                                <span class="text-muted"><?=$b2['pengguna_dibalas'];?></span>
+                                <small class="text-muted ms-3">
+                                    <?=selisihWaktuUntukBalasan2($b2['balasan_id']);?>
+                                </small>
+                            </div>
+                            <p class="mb-0 ms-5">
+                                <?=$b2['isi_balasan'];?>
+                            </p>
+                            <small class="mt-0 ms-5">
+                                <?php if (isset($_SESSION['masuk'])): ?>
+                                <a class="text-decoration-none text-muted balas-komentar-2" data-bs-toggle="modal"
+                                    data-bs-target="#modalSheet" data-id="<?=$b['reason_id'];?>"
+                                    data-pengguna="<?=$b2['nama_pengguna'];?>" data-balasan_ke="4">
+                                    Balas <i class="bi bi-reply"></i>
+                                </a>
+                                <?php else: ?>
+                                <a tabindex="0" class="text-decoration-none text-muted popover-dismiss" role="button"
+                                    data-bs-toggle="popover" data-bs-trigger="focus" title="Penting"
+                                    data-bs-content="Login dulu jika ingin membalas pesan, atau daftar terlebih dahulu.">
+                                    Balas <i class="bi bi-reply"></i>
+                                </a>
+                                <?php endif;?>
+                            </small>
+                        </div>
+                    </div>
+                    <!-- Balasan 4 -->
+                    <?php elseif ($b2['balasan_ke'] == 4): ?>
+                    <div class="ms-5">
+                        <div class="ms-5">
+                            <div class="ms-5">
+                                <div class="fw-normal ms-5 text-primary ">
+                                    <?=$b2['nama_pengguna'];?> <i class="bi bi-arrow-return-right ms-2 me-2"></i>
+                                    <span class="text-muted"><?=$b2['pengguna_dibalas'];?></span>
+                                    <small class="text-muted ms-3">
+                                        <?=selisihWaktuUntukBalasan2($b2['balasan_id']);?>
+                                    </small>
+                                </div>
+                                <p class="mb-0 ms-5">
+                                    <?=$b2['isi_balasan'];?>
+                                </p>
+                                <small class="mt-0 ms-5">
+                                    <?php if (isset($_SESSION['masuk'])): ?>
+                                    <a class="text-decoration-none text-muted balas-komentar-2" data-bs-toggle="modal"
+                                        data-bs-target="#modalSheet" data-id="<?=$b['reason_id'];?>"
+                                        data-pengguna="<?=$b2['nama_pengguna'];?>" data-balasan_ke="5">
+                                        Balas <i class="bi bi-reply"></i>
+                                    </a>
+                                    <?php else: ?>
+                                    <a tabindex="0" class="text-decoration-none text-muted popover-dismiss"
+                                        role="button" data-bs-toggle="popover" data-bs-trigger="focus" title="Penting"
+                                        data-bs-content="Login dulu jika ingin membalas pesan, atau daftar terlebih dahulu.">
+                                        Balas <i class="bi bi-reply"></i>
+                                    </a>
+                                    <?php endif;?>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Balasan 5 -->
+                    <?php elseif ($b2['balasan_ke'] == 5): ?>
+                    <div class="ms-5">
+                        <div class="ms-5">
+                            <div class="ms-5">
+                                <div class="ms-5">
+                                    <div class="fw-normal ms-5 text-primary ">
+                                        <?=$b2['nama_pengguna'];?> <i class="bi bi-arrow-return-right ms-2 me-2"></i>
+                                        <span class="text-muted"><?=$b2['pengguna_dibalas'];?></span>
+                                        <small class="text-muted ms-3">
+                                            <?=selisihWaktuUntukBalasan2($b2['balasan_id']);?>
+                                        </small>
+                                    </div>
+                                    <p class="mb-0 ms-5">
+                                        <?=$b2['isi_balasan'];?>
+                                    </p>
+                                    <small class="mt-0 ms-5">
+                                        <?php if (isset($_SESSION['masuk'])): ?>
+                                        <a class="text-decoration-none text-muted balas-komentar-2"
+                                            data-bs-toggle="modal" data-bs-target="#modalSheet"
+                                            data-id="<?=$b['reason_id'];?>" data-pengguna="<?=$b2['nama_pengguna'];?>"
+                                            data-balasan_ke="6">
+                                            Balas <i class="bi bi-reply"></i>
+                                        </a>
+                                        <?php else: ?>
+                                        <a tabindex="0" class="text-decoration-none text-muted popover-dismiss"
+                                            role="button" data-bs-toggle="popover" data-bs-trigger="focus"
+                                            title="Penting"
+                                            data-bs-content="Login dulu jika ingin membalas pesan, atau daftar terlebih dahulu.">
+                                            Balas <i class="bi bi-reply"></i>
+                                        </a>
+                                        <?php endif;?>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Balasan 6 -->
+                    <?php elseif ($b2['balasan_ke'] == 6): ?>
+                    <div class="ms-5">
+                        <div class="ms-5">
+                            <div class="ms-5">
+                                <div class="ms-5">
+                                    <div class="ms-5">
+                                        <div class="fw-normal ms-5 text-primary ">
+                                            <?=$b2['nama_pengguna'];?> <i
+                                                class="bi bi-arrow-return-right ms-2 me-2"></i>
+                                            <span class="text-muted"><?=$b2['pengguna_dibalas'];?></span>
+                                            <small class="text-muted ms-3">
+                                                <?=selisihWaktuUntukBalasan2($b2['balasan_id']);?>
+                                            </small>
+                                        </div>
+                                        <p class="mb-0 ms-5">
+                                            <?=$b2['isi_balasan'];?>
+                                        </p>
+                                        <small class="mt-0 ms-5">
+                                            <?php if (isset($_SESSION['masuk'])): ?>
+                                            <a class="text-decoration-none text-muted balas-komentar-2"
+                                                data-bs-toggle="modal" data-bs-target="#modalSheet"
+                                                data-id="<?=$b['reason_id'];?>"
+                                                data-pengguna="<?=$b2['nama_pengguna'];?>" data-balasan_ke="7">
+                                                Balas <i class="bi bi-reply"></i>
+                                            </a>
+                                            <?php else: ?>
+                                            <a tabindex="0" class="text-decoration-none text-muted popover-dismiss"
+                                                role="button" data-bs-toggle="popover" data-bs-trigger="focus"
+                                                title="Penting"
+                                                data-bs-content="Login dulu jika ingin membalas pesan, atau daftar terlebih dahulu.">
+                                                Balas <i class="bi bi-reply"></i>
+                                            </a>
+                                            <?php endif;?>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif;?>
                     <?php endif;?>
                     <?php endforeach;?>
                     <?php endif;?>
@@ -551,6 +697,8 @@ if (isset($_POST['tombol_balas_2'])) {
                     <div class="modal-body py-0">
                         <div class="form-floating">
                             <input type="hidden" name="id" id="idUntukBalasan">
+                            <input type="hidden" name="penggunaDibalas" id="penggunaDibalas">
+                            <input type="hidden" name="balasan_ke" id="balasanKe">
                             <textarea class="form-control" placeholder="Tulis komentar di sini" id="floatingTextarea2"
                                 style="height: 100px" name="isi_balasan" required></textarea>
                             <label for="floatingTextarea2">Komentar</label>
@@ -575,13 +723,20 @@ if (isset($_POST['tombol_balas_2'])) {
     $('.balas-komentar').on('click', function() {
         const id = $(this).data("id");
         $('#idUntukBalasan').val(id);
+        const balasan_ke = $(this).data('balasan_ke');
+        $('#balasanKe').val(balasan_ke);
 
         $('.modal-sheet form .modal-footer button').attr('name', 'tombol_balas');
     });
 
     $('.balas-komentar-2').on('click', function() {
+        const nama_pengguna = $(this).data('pengguna');
+        $('#penggunaDibalas').val(nama_pengguna);
         const id = $(this).data('id');
         $('#idUntukBalasan').val(id);
+        const balasan_ke = $(this).data('balasan_ke');
+        $('#balasanKe').val(balasan_ke);
+        console.info(balasan_ke);
 
         $('.modal-sheet form .modal-footer button').attr('name', 'tombol_balas_2');
     });
